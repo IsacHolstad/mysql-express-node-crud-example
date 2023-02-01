@@ -39,11 +39,11 @@ db.once('open', function() {
 });
 
 app.get('/', (req, res) => {
-    response.send("Hello i am working (:");
+    res.send("Hello i am working (:");
 });
 
 app.get('*', (req, res) => {
-    response.send("Hello again i am working (:");
+    res.send("Hello again i am working (:");
 });
 
 // create a new device
