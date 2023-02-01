@@ -22,4 +22,5 @@
       "src": "/device/:id",
       "dest": "app.js"
     }
-]}
+  ]
+}
