@@ -9,6 +9,17 @@
     {
       "src": "/(.*)",
       "dest": "app.js"
+    },
+    {
+      "src": "/getalldevices",
+      "dest": "app.js"
+    },
+    {
+      "src": "/createdevice",
+      "dest": "app.js"
+    },
+    {
+      "src": "/device/:id",
+      "dest": "app.js"
     }
-  ]
-}
+]}
