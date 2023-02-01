@@ -1,75 +1,93 @@
-import express from 'express';
-import mysql from 'mysql';
+import express, {response} from 'express';
+import mongoose from 'mongoose'
 import morgan from 'morgan'
+import bodyParser from "body-parser";
+import dotenv from 'dotenv';
 
+dotenv.config()
+// creating my express server
 const app = express();
-
-const PORT = 8080;
+const PORT = 7777;
 
 // using morgan for logs
-app.use(morgan('combined'))
+app.use(morgan('combined'));
 
-// create connection to database
-const db = mysql.createConnection({
-    host: '127.0.0.1',
-    user: 'root',
-    password:'password',
-    database: 'mydb'
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+// create a schema for the devices collection
+const DeviceSchema = new mongoose.Schema({
+    device_name: String,
+    price: Number
 });
 
-// connect to database
-db.connect((err) => {
-    if (err) {
-        throw err;
-    }
-    console.log('Connected to database');
+// create a model based on the schema
+const Device = mongoose.model('Device', DeviceSchema);
+
+// mongoose instance connection url connection
+mongoose.Promise = global.Promise;
+mongoose.set("strictQuery", false);
+
+console.log(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+    console.log("We're connected to the database <3 <3 !");
 });
 
-// test my backend middleware
 app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
-
-// create user
-app.get('/createuser', (req, res) => {
-    let data = {name: 'Hesham El Masry', email: 'heshamelmasry@example.com', password: 'password'};
-    let sql = 'INSERT INTO users SET ?';
-    let query = db.query(sql, data, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.send('User created...');
-    });
+    response.send("Hello i am working (:");
 });
 
-// get all users
-app.get('/getusers', (req, res) => {
-    let sql = 'SELECT * FROM users';
-    let query = db.query(sql, (err, results) => {
-        if(err) throw err;
-        console.log(results);
-        res.json(results);
-    });
+app.get('*', (req, res) => {
+    response.send("Hello again i am working (:");
 });
 
-// update user
-app.get('/updateuser', (req, res) => {
-    let newEmail = 'newemail@example.com';
-    let sql = `UPDATE users SET email = '${newEmail}' WHERE id = 1`;
-    let query = db.query(sql, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.send('User updated...');
-    });
+// create a new device
+app.post('/createdevice', async (req, res) => {
+    console.log(req.body)
+    const device = new Device(req.body);
+    try {
+        const savedDevice = await device.save();
+        res.send(savedDevice);
+    } catch (error) {
+        res.status(400).send(error);
+    }
 });
 
-// delete user
-app.get('/deleteuser', (req, res) => {
-    let sql = 'DELETE FROM users WHERE id = 1';
-    let query = db.query(sql, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.send('User deleted...');
-    });
+// read all devices
+app.get('/getalldevices', async (req, res) => {
+    try {
+        const devices = await Device.find();
+        res.send(devices);
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+// update a specific device
+app.patch('/device/:id', async (req, res) => {
+    try {
+        const device = await Device.findByIdAndUpdate(req.params.id, req.body, {new: true});
+        if (!device) res.status(404).send('Device not found.');
+        res.send(device);
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+// delete a specific device
+app.delete('/device/:id', async (req, res) => {
+    try {
+        const device = await Device.findByIdAndDelete(req.params.id);
+        if (!device) res.status(404).send('Device not found.');
+        res.send(device);
+    } catch (error) {
+        res.status(400).send(error);
+    }
 });
 
 app.listen(PORT, () => {
